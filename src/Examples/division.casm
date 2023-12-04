@@ -1,0 +1,20 @@
+; A program to calculate a / b
+START:          LDD ZERO            ; load in zero to be written
+                STO QUOTIENT
+                STO SUBTOTAL
+LOOP:           LDD QUOTIENT
+                INC ACC
+                STO QUOTIENT        ; increment quotient
+                LDD SUBTOTAL
+                ADD DIVISOR
+                STO SUBTOTAL        ; add divisor to the subtotal
+                CMP DIVIDENT        ; has the subtotal reached divident yet?
+                JPN LOOP            ; if not, loop again
+                LDD QUOTIENT
+                OUT
+                END
+ZERO:           #0
+DIVISOR:        #5
+QUOTIENT:       
+SUBTOTAL:
+DIVIDENT:       #75
