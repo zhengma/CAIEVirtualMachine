@@ -25,45 +25,49 @@
 
 该架构只含有一个通用寄存器：累加器 `ACC`.  此外还有一个索引寄存器 `IX`.  程序计数器 `PC` 可以通过跳转指令修改.  基址寄存器`BR`的值在加载程序时固定，程序运行过程中不能直接修改.
 
+在进行按位运算时，默认每个寄存器的容量为8位.
+
 ### 指令清单
 
 该指令集包含的指令清单如下：
 
-操作码	操作数	解释
-| LDM  | #n           | Immediate addressing. Load the number n to ACC                                                                                                  |
-| :--- | :----------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| LDD  | \<address>    | Direct addressing. Load the contents of the location at the given address to ACC                                                                |
-| LDI  | \<address>    | Indirect addressing. The address to be used is at the given address. Load the contents of this second address to ACC                            |
-| LDX  | \<address>    | Indexed addressing. Form the address from \<address> + the contents of the index register. Copy the contents of this calculated address to ACC   |
-| LDR  | #n           | Immediate addressing. Load the number n to IX                                                                                                   |
-| MOV  | \<register>   | Move the contents of the accumulator to the given register (IX)                                                                                 |
-| STO  | \<address>    | Store the contents of ACC at the given address                                                                                                  |
-| STX* | \<address>    | Indexed addressing. Form the address from \<address> + the contents of the index register. Copy the contents from ACC to this calculated address |
-| STI* | \<address>    | Indirect addressing. The address to be used is at the given address. Store the contents of ACC at this second address                           |
-| ADD  | \<address>    | Add the contents of the given address to the ACC                                                                                                |
-| ADD  | #n/Bn/&n     | Add the number n to the ACC                                                                                                                     |
-| SUB  | \<address>    | Subtract the contents of the given address from the ACC                                                                                         |
-| SUB  | #n/Bn/&n     | Subtract the number n from the ACC                                                                                                              |
-| INC  | \<register>   | Add 1 to the contents of the register (ACC or IX)                                                                                               |
-| DEC  | \<register>   | Subtract 1 from the contents of the register (ACC or IX)                                                                                        |
-| JMP  | \<address>    | Jump to the given address                                                                                                                       |
-| CMP  | \<address>    | Compare the contents of ACC with the contents of \<address>                                                                                      |
-| CMP  | #n           | Compare the contents of ACC with number n                                                                                                       |
-| CMI  | \<address>    | Indirect addressing. The address to be used is at the given address.  Compare the contents of ACC with the contents of this second address      |
-| JPE  | \<address>    | Following a compare instruction, jump to \<address> if the compare was True                                                                      |
-| JPN  | \<address>    | Following a compare instruction, jump to \<address> if the compare was False                                                                     |
-| AND  | #n / Bn / &n | Bitwise AND operation of the contents of ACC with the operand                                                                                   |
-| AND  | \<address>    | Bitwise AND operation of the contents of ACC with the contents of \<address>                                                                     |
-| XOR  | #n / Bn / &n | Bitwise XOR operation of the contents of ACC with the operand                                                                                   |
-| XOR  | \<address>    | Bitwise XOR operation of the contents of ACC with the contents of \<address>                                                                     |
-| OR   | #n / Bn / &n | Bitwise OR operation of the contents of ACC with the operand                                                                                    |
-| OR   | \<address>    | Bitwise OR operation of the contents of ACC with the contents of \<address>                                                                      |
-| LSL  | #n           | Bits in ACC are shifted logically n places to the left. Zeros are introduced on the right hand end                                              |
-| LSR  | #n           | Bits in ACC are shifted logically n places to the right. Zeros are introduced on the left hand end                                              |
-| IN   |              | Key in a character and store its ASCII value in ACC                                                                                             |
-| OUT  |              | Output to the screen the character whose ASCII value is stored in ACC                                                                           |
-| END  |              | Return control to the operating system                                                                                                          |
-|      |              |                                                                                                                                                 |
+		
+| 操作码 | 操作数         | 解释                                                                                    |
+| :----- | :------------- | :-------------------------------------------------------------------------------------- |
+| `LDM`  | `#n`           | 将立即数 `n` 载入到 `ACC` 中.                                                           |
+| `LDD`  | `<address>`    | 直接寻址. 将指定地址处的内容载入到 `ACC` 中.                                            |
+| `LDI`  | `<address>`    | 间接寻址. 指定地址存放的内容是另一处数据所在的地址. 将后者处的内容载入到 `ACC` 中.      |
+| `LDX`  | `<address>`    | 索引寻址. 把指定地址加上 `IX` 寄存器的内容, 将所得地址处的内容载入到 `ACC` 中.          |
+| `LDR`  | `#n`           | 将立即数 `n` 载入到 `IX` 中                                                             |
+| `MOV`  | `<register>`   | `MOV ACC` 将 `IX` 的内容复制到 `ACC` 中. `MOV IX` 则相反.                               |
+| `STO`  | `<address>`    | 将 `ACC` 的内容写入指定地址.                                                            |
+| `STX`* | `<address>`    | 索引寻址. 把指定地址加上 `IX` 寄存器的内容, 将 `ACC` 的内容写入所得地址处.              |
+| `STI`* | `<address>`    | 间接寻址. 指定地址存放的内容是另一处数据所在的地址. 将 `ACC` 的内容写入后者处.          |
+| `ADD`  | `<address>`    | 在 `ACC` 原有值的基础上加上指定地址处的内容.                                            |
+| `ADD`  | `#n`/`Bn`/`&n` | 在 `ACC` 原有值的基础上加上立即数 `n`                                                   |
+| `SUB`  | `<address>`    | 从 `ACC` 的原有值中减去指定地址处的内容.                                                |
+| `SUB`  | `#n`/`Bn`/`&n` | 从 `ACC` 的原有值中减去立即数`n`.                                                       |
+| `INC`  | `<register>`   | 在指定寄存器 (`ACC` 或 `IX`)的原有值的基础上加1.                                        |
+| `DEC`  | `<register>`   | 在指定寄存器 (`ACC` 或 `IX`)的原有值的基础上减1.                                        |
+| `JMP`  | `<address>`    | 跳转到指定地址.                                                                         |
+| `CMP`  | `<address>`    | 比较 `ACC` 的值与指定地址处的值是否相等                                                 |
+| `CMP`  | `#n`           | 比较 `ACC` 的值与立即数`n`是否相等                                                      |
+| `CMI`  | `<address>`    | 间接寻址. 指定地址存放的内容是另一处数据所在的地址. 比较 `ACC` 的值与后者处的值是否相等 |
+| `JPE`  | `<address>`    | 在比较指令后，若比较结果为相等，则跳转到指定地址处.                                     |
+| `JPN`  | `<address>`    | 在比较指令后，若比较结果为不相等，则跳转到指定地址处.                                   |
+| `AND`  | `#n`/`Bn`/`&n` | 把 `ACC` 的值与立即数 `n` 进行按位与运算, 结果存入 `ACC`.                               |
+| `AND`  | `<address>`    | 把 `ACC` 的值与指定地址处的值进行按位与运算, 结果存入 `ACC`.                            |
+| `XOR`  | `#n`/`Bn`/`&n` | 把 `ACC` 的值与立即数 `n` 进行按位异或运算, 结果存入 `ACC`.                             |
+| `XOR`  | `<address>`    | 把 `ACC` 的值与指定地址处的值进行按位异或运算, 结果存入 `ACC`.                          |
+| `OR`   | `#n`/`Bn`/`&n` | 把 `ACC` 的值与立即数 `n` 进行按位或运算, 结果存入 `ACC`.                               |
+| `OR`   | `<address>`    | 把 `ACC` 的值与指定地址处的值进行按位异或运算, 结果存入 `ACC`.                          |
+| `LSL`  | `#n`           | 把 `ACC` 的值按位左移 `n` 位，右边用零补齐.                                             |
+| `LSR`  | `#n`           | 把 `ACC` 的值按位右移 `n` 位，左边用零补齐.                                             |
+| `IN`   |                | 从键盘读入一个按键，将其 ASCII 码存入 `ACC`.                                            |
+| `OUT`* |                | 在屏幕上输出一个字符，其`ASCII`码为 `ACC` 的值.                                         |
+| `END`  |                | 结束程序.                                                                               |
+|        |                |                                                                                         |
 
 * `STX` 和 `STI` 两条指令是剑桥大学出版的教材中添加的，考试大纲里没有提及
 * `#n` 表示十进制数，`&n` 表示十六进制数，`Bn` 表示二进制数.
+* 为了方便观察，本仿真器中的 `OUT` 可以选择输出数字或字符.
