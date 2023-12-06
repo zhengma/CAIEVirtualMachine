@@ -38,6 +38,17 @@ class caie_vm():
         self.__acc = 0
         self.__ix = 0
         self.__flag = False
+        self.welcome()
+
+    def welcome(self):
+        str_output = f"""
+{'*'*10} CAIE指令集架构仿真器 v1.0 {'*'*10}
+*{' '*45}*
+*{' '*20}马 正 {' '*19}*
+*{' '*6} 渊学通教育广州分校, 上海科桥教育 {' '*5}*
+{'*'*47}
+"""
+        print(str_output)
 
     def show_status(self) -> None:
         str_output = f"""{'-'*10} Registers: {'-'*10}
@@ -49,6 +60,9 @@ IX: {self.__ix}
 flag: {self.__flag}
 """
         print(str_output)
+
+    def bimodeop() -> list:
+        return ['ADD', 'SUB', 'CMP', 'AND', 'XOR', 'OR']
 
     def show_memory(self, range: list = None) -> None:
         if range:
@@ -246,6 +260,7 @@ flag: {self.__flag}
         self.__pc = self.__br
 
     def execute(self) -> None:
+        print('Result:')
         while self.__mem[self.__offset__(self.__pc)][0] != 'END':
             self.single_step(False)
 
