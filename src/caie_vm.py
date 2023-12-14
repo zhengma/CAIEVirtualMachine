@@ -31,14 +31,17 @@ class caie_vm():
     __flag: bool
     __mem: list
 
-    def __init__(self, base: int, program: list) -> None:
+    def __init__(self, base: int, program: list, ext: bool = False) -> None:
         self.__br = base
         self.__pc = base
         self.__mem = program.copy()
         self.__acc = 0
         self.__ix = 0
         self.__flag = False
-        self.welcome()
+        self.__ext = ext
+        if not self.__ext:
+            self.welcome()
+        self.__stdout = ''
 
     def welcome(self):
         str_output = f"""
@@ -60,6 +63,13 @@ IX: {self.__ix}
 flag: {self.__flag}
 """
         print(str_output)
+    
+    def get_status(self) -> dict:
+        return {'ACC': self.__acc,
+               'BR': self.__br,
+               'PC': self.__pc,
+               'IX': self.__ix,
+               'flag': self.__flag}
 
     def bimodeop() -> list:
         return ['ADD', 'SUB', 'CMP', 'AND', 'XOR', 'OR']
@@ -71,6 +81,16 @@ flag: {self.__flag}
             print(self.__mem[start:end])
         else:
             print(self.__mem)
+    
+    def get_memory(self, offset, start: int = None, end: int = None):
+        if not start:
+            start = 0
+        if not end:
+            end = len(self.__mem)
+        return [[i + offset, self.__mem[i]] for i in range(start, end)]
+    
+    def stdout(self) -> str:
+        return self.__stdout
 
     def LDM(self, number) -> None:
         self.__acc = number
@@ -214,9 +234,13 @@ flag: {self.__flag}
 
     def OUT(self, ascii: bool = False) -> None:
         if ascii:
-            print(chr(self.__acc), end='')
+            out = chr(self.__acc)
         else:
-            print(self.__acc)
+            out = str(self.__acc) + '\n'
+        if self.__ext:
+            self.__stdout +=  out
+        else:
+            print(out, end='')
 
     @bimode
     def AND(self, value: int) -> None:
@@ -236,7 +260,9 @@ flag: {self.__flag}
     def LSR(self, n: int) -> None:
         self.__acc = self.__acc >> n
 
-    def single_step(self, debugging: bool = True) -> None:
+    def single_step(self, debugging: bool = True) -> bool:
+        if self.__mem[self.__offset__(self.__pc)][0] == 'END':
+            return False
         line = self.__mem[self.__offset__(self.__pc)]
         if debugging:
             print(line)
@@ -255,6 +281,7 @@ flag: {self.__flag}
             self.show_memory()
         if op[0] != 'J':
             self.__pc += 1
+        return True
     
     def restart(self) -> None:
         self.__pc = self.__br

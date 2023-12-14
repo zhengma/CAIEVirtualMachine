@@ -5,13 +5,22 @@ from typing import Any, Self, Callable
 
 class caie_assembler():
 
-    def __init__(self, source_file: str) -> None:
-        with open(source_file, 'r') as source:
+    def __init__(self, source_file: str, base: int, data: int = 0, 
+                 debug_mode: bool = False) -> None:
+        self.source = source_file
+        with open(source_file, 'r', encoding='utf-8') as source:
             raw_lines = source.readlines()
             self.lines = []
             for line in raw_lines:
                 self.lines.append(line.strip())
-            self.__symbols__()
+        self.__symbols__()
+        self.__baseaddr = base
+        self.__dataaddr = data
+        self.__parsed = None
+        self.__linenums = None
+        self.__label_list = []
+        if not debug_mode:
+            self.parse(base, data)
     
     def __symbols__(self) -> None:
         self.punc_label = ':'
@@ -20,14 +29,19 @@ class caie_assembler():
         self.punc_bin = 'B'
         self.punc_hex = '&'
         funcs = dir(caie_vm)
-        self.mnemonics = ['END', 'ACC', 'IX']
+        self.mnemonics = ['END']
         for f in funcs:
             if len(f) == 2 or len(f) == 3:
                 self.mnemonics.append(f)
+        self.mnemonics.sort(reverse=True)
+        self.reserved = self.mnemonics + ['ACC', 'IX']
+    
+    def get_address(self) -> tuple[int]:
+        return (self.__baseaddr, self.__dataaddr)
 
     def is_valid_label(self, s: str) -> bool:
         pattern = '^[A-Za-z_][A-Za-z0-9_]*$'
-        return bool(re.match(pattern, s)) and (s not in self.mnemonics)
+        return bool(re.match(pattern, s)) and (s not in self.reserved)
 
     def is_valid_opcode(self, s: str) -> bool:
         return s in self.mnemonics
@@ -40,7 +54,7 @@ class caie_assembler():
         return (bool(re.match(pattern, s)) or self.is_valid_label(s) 
                 or s in ['ACC', 'IX'])
 
-    def instant(self, s: str) -> int:
+    def _instant(self, s: str) -> int:
         match s[0]:
             case '#':
                 return int(s[1:])
@@ -49,89 +63,110 @@ class caie_assembler():
             case 'B':
                 return int(s[1:], 2)
             case _:
-                raise Exception('Not an instant number!')
+                raise Exception(f'\'{s}\' is not an instant number!')
+
+    def _lex_comment(self, tokens: dict, line: str) -> (dict, str):
+        line = line.split(self.punc_comment)[0]
+        return (tokens, line)
+    
+    def re_label(self) -> str:
+        return '[A-Za-z_][A-Za-z0-9]*'
+    
+    def re_opcode(self) -> str:
+        opcodes = ''
+        for key in self.mnemonics:
+            opcodes += f'{key}|'
+        return opcodes[:-1]
+
+    def re_operand(self) -> str:
+        p_bin = f'{self.punc_bin}[01]+'
+        p_dec = f'#[0-9]+'
+        p_hex = f'&[A-Fa-f0-9]+'
+        p_address = f'[0-9]+'
+        return f'{p_bin}|{p_dec}|{p_hex}|{p_address}|{self.re_label()}'
+
+    def lex_pattern(self) -> str:
+        return f"\\s*((?P<label>{self.re_label()}):)?\
+(\\s*(?P<opcode>{self.re_opcode()})?\
+(\\s*(?P<operand>{self.re_operand()}))?)?"
 
     def lexical(self, line: str) -> dict:
-        tokens = {}
-        line = line.split(self.punc_comment)[0]
-        if self.punc_label in line:
-            label_statement = line.split(self.punc_label)
-            if len(label_statement) > 2:
-                raise Exception(f'\'{line}\' has too many {self.punc_label}\'s.')
-            if self.is_valid_label(label_statement[0]):
-                tokens['label'] = line.split(self.punc_label)[0]
-            else:
-                raise Exception(f'{label_statement[0]} isn\'t a valid label.')
-            if len(label_statement) == 2:
-                statement = label_statement[1].split()
+        m = re.match(self.lex_pattern(), line)
+        if m and m.end() > m.start():
+            return m.groupdict()
         else:
-            statement = line.split()
-        if len(statement) == 1:
-            if self.is_valid_opcode(statement[0]):
-                tokens['opcode'] = statement[0]
-            elif self.is_valid_operand(statement[0]):
-                tokens['operand'] = statement[0]
-            else:
-                raise Exception(f'\'{statement[0]}\' is invalid.')
-        elif len(statement) == 2:
-            if self.is_valid_opcode(statement[0]):
-                tokens['opcode'] = statement[0]
-            else:
-                raise Exception(f'\'{statement[0]}\' is not a valid opcode.')
-            if self.is_valid_operand(statement[1]):
-                tokens['operand'] = statement[1]
-            else:
-                raise Exception(f'\'{statement[1]}\' is not a valid operand.')
-        return tokens
+            return {}
 
-    def parse(self, base: int, data: int) -> list:
+    def parse(self, base: int, data: int = None) -> None:
         parsed = []
+        line_numbers = {}
         address = base
 
-        for line in self.lines:
-            if line[0] != self.punc_comment:
-                parsed.append([address, self.lexical(line)])
-                if 'opcode' in parsed[-1][1] and parsed[-1][1]['opcode'] == 'END':
+        for num, line in enumerate(self.lines):
+            tokens = self.lexical(line)
+            if tokens:
+                parsed.append([address, tokens])
+                line_numbers[address] = num + 1
+                if (data and parsed[-1][1]['opcode'] == 'END'):
                     parsed[-1][1]['address'] = address
                     address = data
                 else:
                     address += 1
 
-        label_list = []
-        for parsed_line in parsed:
-            if 'label' in parsed_line[1]:
-                label_list.append([parsed_line[0], parsed_line[1]['label']])
-
-        for parsed_line in parsed:
-            if 'operand' in parsed_line[1] and self.is_valid_label(parsed_line[1]['operand']):
-                parsed_line[1]['operand'] = list(filter(lambda x: x[1] == parsed_line[1]['operand'], label_list))[0][0]
-        
-        return [line[1] for line in parsed]
-        # pprint(parsed)
-        # pprint(label_list)
-
-    def generate(self, base: int, data: int):
-        parsed = self.parse(base, data)
-        exe = []
         for pline in parsed:
-            if 'opcode' in pline:
-                if pline['opcode'] == 'END':
-                    exe.append(['END'])
-                    blanks = data - pline['address'] - 1
-                    exe.extend([None]*blanks)
-                elif pline['opcode'] in caie_vm.bimodeop():
-                    if isinstance(pline['operand'], int):
-                        exe.append([pline['opcode'], pline['operand']])
-                    else:
-                        exe.append([pline['opcode'], 
-                                    self.instant(pline['operand']), False])
-                elif 'operand' in pline:
-                    exe.append([pline['opcode'], pline['operand']])
-                else:
-                    exe.append([pline['opcode']])
+            if pline[1]['label']:
+                self.__label_list.append([pline[0], pline[1]['label']])
+
+        for pline in parsed:
+            if pline[1]['operand'] and self.is_valid_label(pline[1]['operand']):
+                try:
+                    pline[1]['operand'] = list(filter(lambda x: 
+                                                      x[1] == pline[1]['operand'], 
+                                                      self.__label_list))[0][0]
+                except IndexError:
+                    print(pline[1]['operand'])
+        
+        self.__parsed =  [line[1] for line in parsed]
+        self.__linenums = line_numbers
+    
+    def instruction_block(self) -> str:
+        lines = []
+        for pline in self.__parsed:
+            if 'opcode' in pline and pline['opcode'] == 'END':
+                break
             else:
-                if 'operand' in pline:
-                    exe.append(self.instant(pline['operand']))
+                instruction = f'{pline["opcode"]}'
+                if pline['operand']:
+                    instruction += f' {pline["operand"]}'
+                lines.append(instruction)
+        return "\n".join(lines)
+
+    def line_number(self, address: int) -> int:
+        return self.__linenums[address]
+    
+    def line_num_list(self) -> list:
+        return self.__linenums.copy()
+
+    def generate(self):
+        exe = []
+        for pline in self.__parsed:
+            if not pline['opcode'] and not pline['operand']:
+                exe.append(None)
+            else:
+                exe.append([])
+            if pline['opcode']:
+                exe[-1].append(pline['opcode'])
+                if pline['opcode'] == 'END' and self.__dataaddr:
+                    blanks = self.__dataaddr - pline['address'] - 1
+                    exe.extend([None]*blanks)
+            if pline['operand']:
+                if (isinstance(pline['operand'], int) or 
+                    pline['operand'] in ['ACC', 'IX']):
+                    exe[-1].append(pline['operand'])
                 else:
-                    exe.append(None)
+                    exe[-1].append(self._instant(pline['operand']))
+                    if pline['opcode'] in caie_vm.bimodeop():
+                        exe[-1].append(False)
+            if isinstance(exe[-1], list) and isinstance(exe[-1][0], int):
+                exe[-1] = exe[-1][0]
         return exe

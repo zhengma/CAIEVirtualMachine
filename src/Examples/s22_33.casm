@@ -1,0 +1,10 @@
+; Solution to Problem 9(b) of 9618/33, May/June 2022
+                LDM #20
+                STO Const
+                LDI Y
+                ADD Const
+                STO Z
+                END
+Const:
+Y:              Z
+Z:              #230
