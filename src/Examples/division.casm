@@ -11,7 +11,7 @@ LOOP:           LDD QUOTIENT
                 CMP DIVIDENT        ; has the subtotal reached divident yet?
                 JPN LOOP            ; if not, loop again
                 LDD QUOTIENT
-                OUT
+                OUI
                 END
 ZERO:           #0
 DIVISOR:        #5

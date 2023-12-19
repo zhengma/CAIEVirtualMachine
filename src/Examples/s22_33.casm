@@ -4,6 +4,7 @@
                 LDI Y
                 ADD Const
                 STO Z
+                OUI
                 END
 Const:
 Y:              Z

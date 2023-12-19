@@ -18,7 +18,7 @@ class caie_assembler():
         self.__dataaddr = data
         self.__parsed = None
         self.__linenums = None
-        self.__label_list = []
+        self.__label_list = {}
         if not debug_mode:
             self.parse(base, data)
     
@@ -80,8 +80,8 @@ class caie_assembler():
 
     def re_operand(self) -> str:
         p_bin = f'{self.punc_bin}[01]+'
-        p_dec = f'#[0-9]+'
-        p_hex = f'&[A-Fa-f0-9]+'
+        p_dec = f'{self.punc_dec}[0-9]+'
+        p_hex = f'{self.punc_hex}[A-Fa-f0-9]+'
         p_address = f'[0-9]+'
         return f'{p_bin}|{p_dec}|{p_hex}|{p_address}|{self.re_label()}'
 
@@ -115,14 +115,14 @@ class caie_assembler():
 
         for pline in parsed:
             if pline[1]['label']:
-                self.__label_list.append([pline[0], pline[1]['label']])
+                if pline[1]['label'] in self.__label_list:
+                    raise Exception(f'{pline[1]["label"]} already exists!')
+                self.__label_list[pline[1]['label']] = pline[0]
 
         for pline in parsed:
             if pline[1]['operand'] and self.is_valid_label(pline[1]['operand']):
                 try:
-                    pline[1]['operand'] = list(filter(lambda x: 
-                                                      x[1] == pline[1]['operand'], 
-                                                      self.__label_list))[0][0]
+                    pline[1]['operand'] = self.__label_list[pline[1]['operand']]
                 except IndexError:
                     print(pline[1]['operand'])
         

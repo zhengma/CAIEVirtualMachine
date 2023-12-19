@@ -232,11 +232,15 @@ flag: {self.__flag}
     def IN(self) -> None:
         self.__acc = ord(readkey())
 
-    def OUT(self, ascii: bool = False) -> None:
-        if ascii:
-            out = chr(self.__acc)
+    def OUT(self) -> None:
+        out = chr(self.__acc)
+        if self.__ext:
+            self.__stdout +=  out
         else:
-            out = str(self.__acc) + '\n'
+            print(out, end='')
+
+    def OUI(self) -> None:
+        out = str(self.__acc)
         if self.__ext:
             self.__stdout +=  out
         else:
