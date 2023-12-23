@@ -242,9 +242,9 @@ flag: {self.__flag}
     def OUI(self) -> None:
         out = str(self.__acc)
         if self.__ext:
-            self.__stdout +=  out
+            self.__stdout +=  out + '\n'
         else:
-            print(out, end='')
+            print(out)
 
     @bimode
     def AND(self, value: int) -> None:

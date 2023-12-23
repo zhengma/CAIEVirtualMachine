@@ -1,0 +1,13 @@
+                LDD A
+LOOP:           AND SEVENTH     ; 把此时ACC的值与01000000做AND运算
+                CMP SEVENTH     ; 若结果等于01000000，表明第七位已经是1了
+                JPE ENDLOOP     ; 那就跳转到末尾
+                LDD A           ; 小心，这时ACC已经被改了，要重新加载
+                LSL #1          ; 否则执行循环，左移一格
+                STO A           ; 保存回结果
+                JMP LOOP ; 循环后，重新回到开头检查条件这回是否满足了
+ENDLOOP:        LDD A
+                OUI
+                END
+SEVENTH:        &80
+A:              #3

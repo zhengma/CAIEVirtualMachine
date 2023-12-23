@@ -1,0 +1,18 @@
+        IN
+        OUI
+        STO A
+        IN
+        OUI
+        STO B
+        LDD A
+        CMP B
+        JPN ELSE        ; 如果是False，跳转到ELSE标签
+THEN:   LDM #89         ; 把'Y' 的 ASCII 码加载到ACC
+        OUT             ; 这样输出的就是字符'Y'了
+        JMP ENDIF       ; 汇编中如果没有J开头的指令，就会无脑按顺序执行
+        ; 所以，如果THEN的模块末尾不跳转到整个选择结构的末尾，就会把ELSE也执行
+ELSE:   LDM #78
+        OUT
+ENDIF:  END
+A:
+B:

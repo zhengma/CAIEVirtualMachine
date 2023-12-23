@@ -111,9 +111,9 @@ class caie_ui():
         return Panel(mem, border_style="blue", title = 'Memory')
 
 if __name__ == "__main__":
-    file_name = "..\src\Examples\division.casm"
+    # file_name = "..\src\Examples\division.casm"
     # file_name = '..\src\Examples\\forloop.casm'
-
+    file_name = "..\src\Examples\whileloop.casm"
     test_assemble = caie_assembler(file_name, 100, 200)
     exe = test_assemble.generate()
     test_run = caie_vm(100, exe, ext=True)

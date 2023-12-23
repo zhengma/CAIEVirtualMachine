@@ -1,0 +1,10 @@
+        LDD START       ; ACC = 2
+LOOP:   CMP EXIT        ; 看是否达到EXIT了
+        JPE ENDLOOP
+        OUI
+        ADD STEP
+        JMP LOOP
+ENDLOOP:END
+START:  #2
+EXIT:   #11
+STEP:   #3
