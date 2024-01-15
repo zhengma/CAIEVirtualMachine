@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import filedialog as fd
+from os import path
 
 class CodeFrame(ctk.CTkFrame):
 
@@ -32,6 +33,7 @@ class CodeFrame(ctk.CTkFrame):
     
     def open_event(self):
         filename = fd.askopenfilename()
+        print(path.basename(filename))
         if filename:
             with open(filename, "r", encoding='utf-8') as file:
                 self.code.delete("1.0", "end")  # Clear the Text widget

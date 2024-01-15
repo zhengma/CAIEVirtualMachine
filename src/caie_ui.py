@@ -31,7 +31,7 @@ class caie_ui():
 
     def disp(self):
         self.__layout["header"].update(self.disp_header())
-        self.__layout["code"].update(self.code_viewer(100))
+        self.__layout["code"].update(self.code_viewer(self.__assembler.get_address()[0]))
 
         with Live(self.__layout, refresh_per_second=10, screen=True):
             while self.__vm.single_step(debugging=False):
@@ -73,7 +73,7 @@ class caie_ui():
                             line_numbers = True,
                             start_line = self.__assembler.get_address()[0],
                             highlight_lines = {current})
-        return Panel(syntax, border_style="green", title = f'{file_name}')
+        return Panel(syntax, border_style="green", title = f'{self.__assembler.source}')
     
     def disp_console(self, s: str) -> Panel:
         return Panel(s, border_style="white", title= 'Command Line')
