@@ -10,14 +10,7 @@ class CodeFrame(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        self.logo_label = ctk.CTkLabel(
-            self, text="Code", font=ctk.CTkFont(size=20, weight="bold"))
-        self.logo_label.grid(
-            row=0, column=0, padx=20, pady=(10, 10), sticky="s")
-        
-        self.open = ctk.CTkButton(
-            self, text="Open", command=self.open_event)
-        self.open.grid(row=4, column=0, padx=20, pady=10)
+        self.set_title()
 
         self.code = ctk.CTkTextbox(
             master=self, width=600, height=480, 
@@ -32,11 +25,21 @@ class CodeFrame(ctk.CTkFrame):
 """)
     
     def open_event(self):
-        filename = fd.askopenfilename()
-        print(path.basename(filename))
-        if filename:
-            with open(filename, "r", encoding='utf-8') as file:
+        self.master.filename = fd.askopenfilename()
+        if self.master.filename:
+            with open(self.master.filename, "r", encoding='utf-8') as file:
                 self.code.delete("1.0", "end")  # Clear the Text widget
                 self.code.insert("end", file.read())  # Insert file content
-        self.code.tag_add("start", "1.0","2.0")
-        self.code.tag_config("start", background="dark red", foreground="white")
+                self.set_title(path.basename(self.master.filename))
+        self.highlight()
+    
+    def highlight(self, line=1):
+        self.code.tag_delete('current')
+        self.code.tag_add('current', f'{line}.0', f'{line+1}.0')
+        self.code.tag_config('current', background="dark red", foreground="white")
+    
+    def set_title(self, content='Code'):
+        self.title = ctk.CTkLabel(
+            self, text=content, font=ctk.CTkFont(size=20, weight="bold"))
+        self.title.grid(
+            row=0, column=0, padx=20, pady=(10, 0), sticky="s")

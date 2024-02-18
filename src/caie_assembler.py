@@ -70,7 +70,7 @@ class caie_assembler():
         return (tokens, line)
     
     def re_label(self) -> str:
-        return '[A-Za-z_][A-Za-z0-9]*'
+        return '[A-Za-z_][A-Za-z0-9_]*'
     
     def re_opcode(self) -> str:
         opcodes = ''

@@ -29,7 +29,14 @@ class caie_vm():
     __ix: int
     __br: int
     __flag: bool
+    __ext: bool # 是否调用外界的UI，False则直接在命令行或Jupyter Notebook里运行
     __mem: list
+    __flag_interrupt: int
+    # 中断寄存器取值的涵义
+    # 0 - 无中断
+    # 1 - 有输出
+    # 2 - 等待输入
+    __stdout: str
 
     def __init__(self, base: int, program: list, ext: bool = False) -> None:
         self.__br = base
@@ -41,6 +48,7 @@ class caie_vm():
         self.__ext = ext
         if not self.__ext:
             self.welcome()
+        self.__flag_interrupt = 0
         self.__stdout = ''
 
     def welcome(self):
@@ -89,7 +97,15 @@ flag: {self.__flag}
             end = len(self.__mem)
         return [[i + offset, self.__mem[i]] for i in range(start, end)]
     
+    def get_interrupt(self) -> int:
+        return self.__flag_interrupt
+    
+    def stdin(self, value: int) -> None:
+        self.__flag_interrupt = 0
+        self.__acc = value
+    
     def stdout(self) -> str:
+        self.__flag_interrupt = 0
         return self.__stdout
 
     def LDM(self, number) -> None:
@@ -230,19 +246,24 @@ flag: {self.__flag}
             self.__pc += 1
 
     def IN(self) -> None:
-        self.__acc = ord(readkey())
+        if self.__ext:
+            self.__flag_interrupt = 2
+        else:
+            self.__acc = ord(readkey())
 
     def OUT(self) -> None:
         out = chr(self.__acc)
         if self.__ext:
-            self.__stdout +=  out
+            self.__stdout =  out
+            self.__flag_interrupt = 1
         else:
             print(out, end='')
 
     def OUI(self) -> None:
         out = str(self.__acc)
         if self.__ext:
-            self.__stdout +=  out + '\n'
+            self.__stdout =  out + '\n'
+            self.__flag_interrupt = 1
         else:
             print(out)
 

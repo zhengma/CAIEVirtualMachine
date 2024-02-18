@@ -18,6 +18,7 @@ class caie_ui():
         self.__assembler = assembler
         self.__vm = vm
         self.__layout = None
+        self.__stdout = ''
         self.__make_layout()
         self.__disp_mode = {'code': False, 'mem': True}
     
@@ -27,7 +28,8 @@ class caie_ui():
         self.__layout["memory"].update(self.mem_viewer(self.__get_mem()))
         self.__layout["code"].update(self.code_viewer(
             self.__get_current(status['PC'])))
-        self.__layout["footer"].update(self.disp_console(self.__vm.stdout()))
+        self.__interrupt_dispatch()
+        self.__layout["footer"].update(self.disp_console(self.__stdout))
 
     def disp(self):
         self.__layout["header"].update(self.disp_header())
@@ -93,6 +95,10 @@ class caie_ui():
             return self.__assembler.line_number(pc)
         else:
             return pc
+        
+    def __interrupt_dispatch(self):
+        if self.__vm.get_interrupt() == 1:
+            self.__stdout += self.__vm.stdout()
    
     def state_viewer(self, regs: dict) -> Panel:
         state = Table(expand=True, box=box.SIMPLE_HEAVY)
