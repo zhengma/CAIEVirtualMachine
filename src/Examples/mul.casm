@@ -1,0 +1,29 @@
+; a program to calculate a x b
+START:          LDD A
+                STO TEMPA
+                LDD B
+                STO TEMPB
+LOOP:           LDD TEMPB
+                CMP #0
+                JPE OUTPUT
+IF:             AND #1
+                CMP #0
+                JPE ENDIF
+                LDD PROD
+                ADD TEMPA
+                STO PROD
+ENDIF:          LDD TEMPB
+                LSR #1
+                STO TEMPB
+                LDD TEMPA
+                LSL #1
+                STO TEMPA
+                JMP LOOP
+OUTPUT:         LDD PROD
+                OUI
+                END
+A:              #14
+B:              #11
+TEMPA:
+TEMPB:
+PROD:           #0

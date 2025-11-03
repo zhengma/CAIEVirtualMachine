@@ -1,0 +1,15 @@
+START:          LDD DATA
+                LDI DATA
+                LDM #3
+                MOV IX
+                LDX ARR
+                LDR #2
+                LDX ARR
+                END
+DATA:           #202
+                #10
+                #20
+ARR:            &5
+                &7
+                &B
+                &D          
